@@ -26,7 +26,7 @@ main{max-width:1180px;margin:24px auto;padding:0 18px 60px}.intro{display:flex;j
 </head>
 <body>
 <header>
-  <div class="brand"><div class="logo">🥬</div><div><h1>Veckokassen</h1><p>Smart matplanering, mindre svinn och bättre priser</p></div></div>
+  <div class="brand"><div class="logo">🥬</div><div><h1>Veckokassen</h1><p>Smart matplanering · 652 receptvarianter · mindre svinn och bättre priser</p></div></div>
   <div class="header-actions"><button class="secondary" id="resetBtn">Återställ vecka</button><button id="copyBtn">Kopiera inköpslista</button></div>
 </header>
 <main>
@@ -125,6 +125,53 @@ const recipes=[
 {id:"pasta",category:"vegan",name:"Pasta med tomat och linser",tag:"Veganskt",mins:20,cost:18,ingredients:[["Pasta","g",250],["Röda linser","g",150],["Krossade tomater","g",400],["Gul lök","st",1],["Parmesan","g",40]],steps:["Koka pastan.","Fräs lök, tillsätt linser och krossade tomater.","Låt sjuda tills linserna är mjuka.","Servera med pasta och parmesan."]},
 {id:"sausage",category:"pork",name:"Korvstroganoff med ris",tag:"Fläskkött",mins:25,cost:24,ingredients:[["Falukorv","g",350],["Ris","g",150],["Krossade tomater","g",400],["Matlagningsgrädde","ml",150],["Gul lök","st",1]],steps:["Koka riset.","Strimla korven och stek med lök.","Tillsätt tomat och grädde och låt puttra.","Servera med ris."]}
 ];
+// 640 extra receptvarianter byggs lokalt – ingen API-nyckel eller nätverksanrop behövs.
+// 10 proteiner × 8 baser × 8 smakprofiler = 640 kombinationer.
+const recipeProteins = [
+ {name:"Kyckling",ingredient:"Kycklingfilé",unit:"g",qty:350,category:"chicken",tag:"Kyckling",cost:32},
+ {name:"Nötfärs",ingredient:"Nötfärs",unit:"g",qty:350,category:"mince",tag:"Nötfärs",cost:36},
+ {name:"Lax",ingredient:"Laxfilé",unit:"g",qty:300,category:"fish",tag:"Fisk",cost:46},
+ {name:"Fläskytterfilé",ingredient:"Fläskytterfilé",unit:"g",qty:350,category:"pork",tag:"Fläskkött",cost:34},
+ {name:"Biffstrimlor",ingredient:"Nötkött strimlat",unit:"g",qty:300,category:"beef",tag:"Nötkött",cost:47},
+ {name:"Halloumi",ingredient:"Halloumi",unit:"g",qty:200,category:"vegetarian",tag:"Vegetariskt",cost:31},
+ {name:"Röda linser",ingredient:"Röda linser",unit:"g",qty:200,category:"vegan",tag:"Veganskt",cost:22},
+ {name:"Falukorv",ingredient:"Falukorv",unit:"g",qty:350,category:"pork",tag:"Fläskkött",cost:26},
+ {name:"Fiskkakor",ingredient:"Fiskkakor",unit:"g",qty:400,category:"fish",tag:"Fisk",cost:33},
+ {name:"Kalkon",ingredient:"Kycklingfilé",unit:"g",qty:350,category:"turkey",tag:"Kalkon",cost:35}
+];
+const recipeBases = [
+ {name:"pasta",ingredients:[["Pasta","g",250]],step:"Koka pastan enligt förpackningen."},
+ {name:"ris",ingredients:[["Ris","g",150]],step:"Koka riset enligt förpackningen."},
+ {name:"rostad potatis",ingredients:[["Potatis","g",500]],step:"Rosta potatisen i 220 °C tills den är mjuk och gyllene."},
+ {name:"nudlar",ingredients:[["Äggnudlar","g",250]],step:"Koka nudlarna enligt förpackningen."},
+ {name:"tortillawraps",ingredients:[["Tortillabröd","st",4]],step:"Värm tortillabröden och förbered dem för servering."},
+ {name:"bulgur",ingredients:[["Bulgur","g",160]],step:"Koka bulgur enligt förpackningen."},
+ {name:"couscous",ingredients:[["Couscous","g",160]],step:"Tillred couscous enligt förpackningen."},
+ {name:"matig sallad",ingredients:[["Sallad","g",150],["Tomat","st",2],["Gurka","st",1]],step:"Skölj och skär grönsakerna till en matig sallad."}
+];
+const recipeFlavours = [
+ {name:"krämig vitlökssås",ings:[["Matlagningsgrädde","ml",200],["Vitlök","klyfta",2],["Gul lök","st",1]],step:"Fräs lök och vitlök, tillsätt grädde och låt såsen sjuda."},
+ {name:"tomat- och örtsås",ings:[["Krossade tomater","g",400],["Gul lök","st",1]],step:"Låt tomater och lök sjuda med oregano, basilika och svartpeppar."},
+ {name:"kokos-currysås",ings:[["Kokosmjölk","ml",400],["Gul lök","st",1]],step:"Fräs curry och lök, tillsätt kokosmjölk och sjud försiktigt."},
+ {name:"soja- och ingefärssås",ings:[["Soja","ml",40],["Vitlök","klyfta",2],["Wokgrönsaker","g",250]],step:"Stek med vitlök, ingefära och soja; låt grönsakerna bli mjuka men spänstiga."},
+ {name:"paprika- och gräddsås",ings:[["Matlagningsgrädde","ml",200],["Paprika","st",1],["Gul lök","st",1]],step:"Fräs paprika och lök, häll på grädde och krydda med paprikapulver."},
+ {name:"citron- och örtdressing",ings:[["Citron","st",1],["Yoghurt","g",150]],step:"Rör ihop citron, yoghurt, örter, salt och peppar till en frisk dressing."},
+ {name:"tacosmak",ings:[["Tacosås","g",100],["Majs","g",150],["Tomat","st",1]],step:"Krydda med spiskummin och paprikapulver och vänd ner tacosås och majs."},
+ {name:"pesto och spenat",ings:[["Spenat","g",100],["Parmesan","g",30]],step:"Vänd ner pesto och spenat och toppa med parmesan före servering."}
+];
+const expandedRecipes=[];
+for(const protein of recipeProteins){
+ for(const base of recipeBases){
+  for(const flavour of recipeFlavours){
+   const idx=expandedRecipes.length+1;
+   const ingredients=[[protein.ingredient,protein.unit,protein.qty],...base.ingredients,...flavour.ings];
+   const unique=[]; const seen=new Set(); for(const ing of ingredients){const k=ing[0].toLocaleLowerCase("sv-SE");if(seen.has(k)){const found=unique.find(x=>x[0].toLocaleLowerCase("sv-SE")===k);found[2]+=ing[2];}else{seen.add(k);unique.push([...ing]);}}
+   const proteinVerb=protein.category==="fish"?"Tillaga fisken varsamt":protein.category==="vegetarian"?"Stek halloumin gyllene":protein.category==="vegan"?"Fräs linserna lätt med kryddor": "Bryn proteinet i en varm panna och tillaga tills det är klart";
+   expandedRecipes.push({id:`extra-${idx}`,category:protein.category,name:`${protein.name} med ${base.name} och ${flavour.name}`,tag:protein.tag,mins:20+((idx*7)%26),cost:protein.cost+({pasta:3,ris:2,"rostad potatis":3,nudlar:3,tortillawraps:4,bulgur:3,couscous:3,"matig sallad":4}[base.name]||3)+({"krämig vitlökssås":4,"tomat- och örtsås":3,"kokos-currysås":4,"soja- och ingefärssås":4,"paprika- och gräddsås":4,"citron- och örtdressing":3,tacosmak:3,"pesto och spenat":5}[flavour.name]||3),ingredients:unique,steps:[base.step,proteinVerb+" enligt lämplig metod.",flavour.step,"Smaka av med salt och peppar och servera varmt."]});
+  }
+ }
+}
+recipes.push(...expandedRecipes);
 const defaultState={budget:1800,diners:2,boxes:[1,1,1,1,0,0,0],recipeIds:["chicken","taco","salmon","pork","beef","veggie","meatballs"],stores:["Willys","ICA","Lidl","Coop","Hemköp"],diet:"all",preferences:["chicken","beef","mince","pork","fish","seafood","vegetarian","vegan","lamb","turkey"],prices:{},checked:[]};
 const lidlBaseline = {"kycklingfilé": {"price": 79.9, "packSize": 700, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "pasta": {"price": 17.9, "packSize": 1000, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "matlagningsgrädde": {"price": 13.9, "packSize": 500, "packUnit": "ml", "store": "Lidl", "source": "Uppskattat normalpris"}, "gul lök": {"price": 12.9, "packSize": 1000, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "vitlök": {"price": 8.9, "packSize": 1, "packUnit": "st", "store": "Lidl", "source": "Uppskattat normalpris"}, "spenat": {"price": 16.9, "packSize": 200, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "nötfärs": {"price": 59.9, "packSize": 500, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "ris": {"price": 24.9, "packSize": 1000, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "majs": {"price": 9.9, "packSize": 340, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "tomat": {"price": 24.9, "packSize": 500, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "gurka": {"price": 14.9, "packSize": 1, "packUnit": "st", "store": "Lidl", "source": "Uppskattat normalpris"}, "tacosås": {"price": 14.9, "packSize": 230, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "laxfilé": {"price": 49.9, "packSize": 250, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "potatis": {"price": 19.9, "packSize": 2000, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "crème fraîche": {"price": 13.9, "packSize": 200, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "citron": {"price": 5.9, "packSize": 1, "packUnit": "st", "store": "Lidl", "source": "Uppskattat normalpris"}, "broccoli": {"price": 16.9, "packSize": 500, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "fläskytterfilé": {"price": 49.9, "packSize": 700, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "paprika": {"price": 24.9, "packSize": 3, "packUnit": "st", "store": "Lidl", "source": "Uppskattat normalpris"}, "nötkött strimlat": {"price": 49.9, "packSize": 300, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "äggnudlar": {"price": 14.9, "packSize": 250, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "wokgrönsaker": {"price": 19.9, "packSize": 750, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "soja": {"price": 14.9, "packSize": 150, "packUnit": "ml", "store": "Lidl", "source": "Uppskattat normalpris"}, "halloumi": {"price": 24.9, "packSize": 200, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "zucchini": {"price": 12.9, "packSize": 1, "packUnit": "st", "store": "Lidl", "source": "Uppskattat normalpris"}, "yoghurt": {"price": 19.9, "packSize": 1000, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "mjölk": {"price": 16.9, "packSize": 1500, "packUnit": "ml", "store": "Lidl", "source": "Uppskattat normalpris"}, "ägg": {"price": 29.9, "packSize": 15, "packUnit": "st", "store": "Lidl", "source": "Uppskattat normalpris"}, "ströbröd": {"price": 9.9, "packSize": 400, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "lingonsylt": {"price": 19.9, "packSize": 400, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "kidneybönor": {"price": 8.9, "packSize": 400, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "krossade tomater": {"price": 7.9, "packSize": 400, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "fiskkakor": {"price": 24.9, "packSize": 400, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "gröna ärtor": {"price": 12.9, "packSize": 500, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "röda linser": {"price": 19.9, "packSize": 500, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "kokosmjölk": {"price": 12.9, "packSize": 400, "packUnit": "ml", "store": "Lidl", "source": "Uppskattat normalpris"}, "tortillabröd": {"price": 19.9, "packSize": 8, "packUnit": "st", "store": "Lidl", "source": "Uppskattat normalpris"}, "sallad": {"price": 19.9, "packSize": 200, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "parmesan": {"price": 24.9, "packSize": 150, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}, "falukorv": {"price": 24.9, "packSize": 800, "packUnit": "g", "store": "Lidl", "source": "Uppskattat normalpris"}};;
 let state;

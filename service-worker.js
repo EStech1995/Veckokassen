@@ -1,4 +1,4 @@
-const CACHE_NAME = 'veckokassen-v6';
+const CACHE_NAME = 'veckokassen-v7';
 const APP_FILES = ['./', './index.html', './offers.json', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png', './icons/icon-512-maskable.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)).then(() => self.skipWaiting()));
