@@ -158,6 +158,13 @@ state.recipeIds=Array.from({length:7},(_,i)=>state.recipeIds?.[i]||defaultState.
 state.prices=state.prices||{};state.checked=state.checked||[];state.cookDays=Array.isArray(state.cookDays)&&state.cookDays.length?state.cookDays:["Söndag","Tisdag","Torsdag"];state.cookModes=state.cookModes||{};state.preferences=state.preferences||["chicken","beef","mince","pork","fish","seafood","vegetarian","vegan","lamb","turkey"];
 const fmt=n=>new Intl.NumberFormat("sv-SE",{maximumFractionDigits:0}).format(n);
 const money=n=>fmt(Math.round(n))+" kr";
+// Formatera mängder för receptkort och inköpslista. Denna funktion saknades
+// i v3 och gjorde att renderWeek() avbröts innan några middagar visades.
+function unitFmt(qty, unit){
+  const n = Number(qty) || 0;
+  const rounded = new Intl.NumberFormat("sv-SE", {maximumFractionDigits: 1}).format(n);
+  return `${rounded} ${unit}`;
+}
 function save(){localStorage.setItem("veckokassen-v2",JSON.stringify(state));document.getElementById("savedLabel").textContent="Sparat "+new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});}
 function eligibleRecipes(excludeId=""){let selected=state.preferences||[];let pool=selected.length?recipes.filter(r=>selected.includes(r.category)):recipes.slice();if(state.diet==="quick")pool=pool.filter(r=>r.mins<=30);if(state.diet==="budget")pool=pool.filter(r=>r.cost<=30);if(state.diet==="fish")pool=pool.filter(r=>r.category==="fish"||r.category==="seafood");if(state.diet==="veg")pool=pool.filter(r=>r.category==="vegetarian"||r.category==="vegan");if(excludeId)pool=pool.filter(r=>r.id!==excludeId);return pool.length?pool:recipes.filter(r=>r.id!==excludeId)}
 function getRecipe(i){return recipes.find(r=>r.id===state.recipeIds[i])||recipes[0]}
