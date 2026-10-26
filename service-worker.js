@@ -1,5 +1,5 @@
-const CACHE_NAME = 'veckokassen-v1';
-const APP_FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png', './icons/icon-512-maskable.png'];
+const CACHE_NAME = 'veckokassen-v3';
+const APP_FILES = ['./', './index.html', './offers.json', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png', './icons/icon-512-maskable.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)).then(() => self.skipWaiting()));
 });

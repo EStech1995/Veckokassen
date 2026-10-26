@@ -78,6 +78,7 @@ main{max-width:1180px;margin:24px auto;padding:0 18px 60px}.intro{display:flex;j
       <div>
         <div class="panel"><h3>Budgetöversikt</h3><p class="help">Kostnad utifrån uppskattningar och priser du själv lagt in.</p><div class="budgetbar"><span id="budgetBar"></span></div><div style="display:flex;justify-content:space-between;gap:10px"><strong id="listCost">–</strong><span class="small" id="listBudget">av 1 800 kr</span></div><p id="budgetMessage" class="help"></p><button style="width:100%;margin-top:8px" id="exportBtn">Exportera inköpslista (.txt)</button></div>
         <div class="panel"><h3>Hitta erbjudanden</h3><p class="help">Öppna sökningar för dina valda butiker och kontrollera priset och giltighetstiden. Tillgänglighet kan variera lokalt.</p><div id="offerShortcuts" class="offer-links"></div><div class="note">Tips: Ange priset du hittar under respektive vara. Då kan Veckokassen räkna om totalsumman. Erbjudanden visas inte som verifierade förrän priset har kontrollerats.</div></div>
+        <div class="panel"><h3>Lidl-erbjudanden</h3><p class="help" id="lidlOfferStatus">Kontrollerar om verifierade erbjudanden finns…</p><div id="lidlOffers" class="offer-links"></div><p class="note">Endast erbjudanden med källa, pris och giltighetsdatum visas här. Den här versionen hittar inte automatiskt Lidl-priser ännu; inga uppskattningar märks som verifierade.</p></div>
         <div class="panel"><h3>Dela med familjen</h3><p class="help">Kopiera listan och klistra in i Apple Anteckningar, eller exportera den som textfil.</p><button class="secondary" style="width:100%" id="shareBtn">Dela / kopiera lista</button></div>
       </div>
     </div>
@@ -155,7 +156,27 @@ document.getElementById("copyBtn").addEventListener("click",copyList);document.g
 document.getElementById("uncheckBtn").addEventListener("click",()=>{state.checked=[];save();renderGroceries()});
 document.getElementById("shuffleBtn").addEventListener("click",()=>{let used=[];state.recipeIds=state.recipeIds.map((id,i)=>{let options=eligibleRecipes().filter(r=>!used.includes(r.id));if(!options.length)options=eligibleRecipes();let pick=options[Math.floor(Math.random()*options.length)]||recipes[i];used.push(pick.id);return pick.id});save();renderAll();toast("Ny veckomeny skapad")});
 document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Återställa veckomenyn och inställningarna?")){state={...defaultState,boxes:[...defaultState.boxes],recipeIds:[...defaultState.recipeIds],stores:[...defaultState.stores],prices:{},checked:[]};save();renderAll();toast("Veckan återställd")}});
+
+let lidlOfferData = null;
+async function loadLidlOffers(){
+  const status=document.getElementById("lidlOfferStatus"), box=document.getElementById("lidlOffers");
+  try{
+    const response=await fetch("./offers.json?ts="+Date.now(),{cache:"no-store"});
+    if(!response.ok) throw new Error("offers.json saknas");
+    const data=await response.json();
+    const offers=Array.isArray(data.offers)?data.offers:[];
+    const today=new Date().toISOString().slice(0,10);
+    const valid=offers.filter(o=>o.store==="Lidl" && Number(o.price)>=0 && o.name && o.validFrom && o.validTo && o.validFrom<=today && o.validTo>=today && o.sourceUrl);
+    lidlOfferData=data;
+    if(!valid.length){status.textContent="Inga aktuella, verifierade Lidl-erbjudanden är inlagda.";box.innerHTML='<span class="small">Öppna Lidls officiella erbjudandesida för att kontrollera veckans priser.</span> <a href="https://www.lidl.se/c/erbjudanden/s10017738" target="_blank" rel="noopener noreferrer">Lidl erbjudanden ↗</a>';return;}
+    status.textContent="Verifierade erbjudanden · uppdaterade "+(data.updatedAt||"datum saknas");
+    box.innerHTML=valid.map(o=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><strong>${escapeHtml(o.name)}</strong> · ${money(Number(o.price))}${o.unit?" / "+escapeHtml(o.unit):""}<div class="small">Gäller ${escapeHtml(o.validFrom)}–${escapeHtml(o.validTo)} · <a href="${safeUrl(o.sourceUrl)}" target="_blank" rel="noopener noreferrer">Källa ↗</a></div></div>`).join("");
+  }catch(e){status.textContent="Kunde inte läsa erbjudandedata. Kontrollera att offers.json finns i GitHub-repot.";box.innerHTML='<a href="https://www.lidl.se/c/erbjudanden/s10017738" target="_blank" rel="noopener noreferrer">Öppna Lidls officiella erbjudanden ↗</a>';}
+}
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function safeUrl(v){try{const u=new URL(v);return u.protocol==="https:"?u.href:"https://www.lidl.se/c/erbjudanden/s10017738"}catch(e){return "https://www.lidl.se/c/erbjudanden/s10017738"}}
 renderAll();
+loadLidlOffers();
 </script>
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
